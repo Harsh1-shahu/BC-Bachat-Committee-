@@ -15,7 +15,7 @@ const WithdrawalModal = () => {
     walletBalance
   } = useProject();
 
-  const { walletTransfer } = useProject2();
+  const { walletTransfer, confirmAction } = useProject2();
 
   // Prevent background scroll
   useEffect(() => {
@@ -131,20 +131,37 @@ const WithdrawalModal = () => {
   const handleSubmit = async () => {
     setError("");
 
+    // --------------------------------------
+    // 🔥 STEP 1 — SHOW CONFIRM POPUP
+    // --------------------------------------
+    let message = "";
+
+    if (activeTab === "withdraw") {
+      message = `Are you sure you want to withdraw ₹${amount}?`;
+    } else {
+      message = `Are you sure you want to transfer ₹${amount} to "${username}"?`;
+    }
+
+    const ok = await confirmAction(message);
+    if (!ok) {
+      showNotification("Action cancelled", "info");
+      return;
+    }
+
+    // --------------------------------------
+    // 🔥 STEP 2 — PROCEED IF CONFIRMED
+    // --------------------------------------
+
     // WITHDRAW
     if (activeTab === "withdraw") {
       const res = await walletTransfer(amount, user.USERNAME, "Withdrawal");
 
-      console.log("Withdraw Response →", res);
-
       if (res.ResponseStatus === "success") {
         showNotification("Withdrawal Submitted Successfully", "success");
-        if (user?.MEMB_CODE) {
-          walletBalance(user.MEMB_CODE);
-        }
+        if (user?.MEMB_CODE) walletBalance(user.MEMB_CODE);
+
         resetForm();
         toggleWithdrawModal();
-
       } else {
         showNotification(res.ResponseMessage || "Withdraw failed", "error");
       }
@@ -154,19 +171,17 @@ const WithdrawalModal = () => {
     // TRANSFER
     const res = await walletTransfer(amount, username, "Transfer");
 
-    console.log("Transfer Response →", res);
-
     if (res.ResponseStatus === "success") {
       showNotification("Wallet Transferred Successfully!", "success");
-      if (user?.MEMB_CODE) {
-        walletBalance(user.MEMB_CODE);
-      }
+      if (user?.MEMB_CODE) walletBalance(user.MEMB_CODE);
+
       resetForm();
       toggleWithdrawModal();
     } else {
       showNotification(res.ResponseMessage || "Transfer failed", "error");
     }
   };
+
 
   if (!withdrawModal) return null;
 

@@ -6,6 +6,7 @@ import Footer from "../Navigation/Footer";
 import RunningBC from "./RunningBC";
 import OwnBC from "./OwnBC";
 import { AiFillSchedule } from "react-icons/ai";
+import { AiFillInteraction } from "react-icons/ai";
 import { FaWallet } from "react-icons/fa";
 import { useProject } from "../../../Context/ProjectContext";
 import { useProject2 } from "../../../Context/ProjectContext2";
@@ -21,10 +22,10 @@ const Dashboard = () => {
     dashboardDetails,
     setLoading,
     GetBhisiList,
-    walletBalance
+    walletBalance,
   } = useProject();
 
-  const { renewBhisi } = useProject2();
+  const { renewBhisi, confirmAction } = useProject2();
 
   const buttonLabel = import.meta.env.VITE_BUTTON_LABEL;
 
@@ -147,11 +148,7 @@ const Dashboard = () => {
   // --------------------------------
   const handleConfirm = async () => {
 
-    console.log('username', username);
-    console.log('spons', sponsorCode);
-
-
-    // Shared validation
+    // Validation
     if (!username || !bhisiNo) {
       showNotification("Please enter username & Bhisi No", "error");
       return;
@@ -167,6 +164,25 @@ const Dashboard = () => {
       return;
     }
 
+    // --------------------------------------------
+    // 🔥 STEP 1 — SHOW CONFIRM POPUP (DYNAMIC)
+    // --------------------------------------------
+    let message =
+      actionType === "renew"
+        ? `Are you sure you want to renew Bhisi No ${bhisiNo} of ₹${bhisiAmount}? `
+        : `Are you sure you want to purchase Bhisi No ${bhisiNo} of ₹${bhisiAmount}?`;
+
+    const ok = await confirmAction(message);
+
+    if (!ok) {
+      showNotification("Action cancelled", "info");
+      return;
+    }
+
+    // --------------------------------------------
+    // 🔥 STEP 2 — PROCEED ONLY IF CONFIRMED
+    // --------------------------------------------
+
     // -------------- RENEW --------------
     if (actionType === "renew") {
       try {
@@ -174,24 +190,18 @@ const Dashboard = () => {
 
         const res = await renewBhisi(bhisiNo, username, sponsorCode);
 
-        console.log("Renew API Response:", res);  // 🔥 Shows detailed response in console
-
         if (res.ResponseStatus === "success") {
           showNotification("Bhisi Renewed Successfully!", "success");
 
-          //  Update dashboard for RunningBC / OwnBC instantly
+          // Refresh dashboard
           try {
             if (typeof dashboardDetails === "function") {
               setLoading(true);
               await dashboardDetails(sponsorCode);
             }
+          } catch { }
 
-
-          } catch (e) {
-            console.log("Failed to refresh dashboard:", e);
-          }
-
-          // 💰 Refresh wallet balance of logged-in user
+          // Refresh wallet
           if (user?.MEMB_CODE) {
             await walletBalance(user.MEMB_CODE);
           }
@@ -200,7 +210,7 @@ const Dashboard = () => {
         } else {
           showNotification(res.ResponseMessage || "Renew failed", "error");
         }
-      } catch (err) {
+      } catch {
         showNotification("Renew failed", "error");
       }
 
@@ -208,28 +218,24 @@ const Dashboard = () => {
       return;
     }
 
-
     // -------------- PURCHASE --------------
     try {
       setLoadingPurchase(true);
-      const res = await bhisiPurchase(bhisiNo, username, sponsorCode);
+
+      const res = await bhisiPurchase(bhisiNo, sponsorCode, username);
 
       if (res.ResponseStatus === "success") {
-        showNotification("Purchase successful!", "success");
+        showNotification("Purchase Successful!", "success");
 
-        // Refresh dashboard to update OwnBC instantly
+        // Refresh dashboard
         try {
           if (typeof dashboardDetails === "function") {
             setLoading(true);
             await dashboardDetails(sponsorCode);
           }
+        } catch { }
 
-
-        } catch (e) {
-          console.log("Failed to refresh dashboard:", e);
-        }
-
-        // 💰 Refresh wallet balance of logged-in user
+        // Refresh wallet
         if (user?.MEMB_CODE) {
           await walletBalance(user.MEMB_CODE);
         }
@@ -244,6 +250,7 @@ const Dashboard = () => {
 
     setLoadingPurchase(false);
   };
+
 
 
   const fetchBhisiList = async () => {
@@ -335,10 +342,17 @@ const Dashboard = () => {
               ×
             </button>
 
-            <h2 className="flex items-center justify-center gap-2 text-xl font-bold text-center mb-4 bg-linear-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">
-              <AiFillSchedule className="text-violet-500" />
+            <h2 className="flex items-center justify-center gap-2 text-xl font-bold text-center mb-4 
+               bg-linear-to-r from-indigo-600 to-purple-600 text-transparent bg-clip-text">
+              {actionType === "purchase" ? (
+                <AiFillSchedule className="text-indigo-500" />
+              ) : (
+                <AiFillInteraction className="text-purple-500" />
+              )}
+
               {actionType === "purchase" ? "Bhisi Purchase" : "Bhisi Renew"}
             </h2>
+
 
             {/* Wallet balance */}
             <div className="bg-linear-to-r from-[#b67b1a] to-[#d8ae4a] text-white p-2 rounded-xl shadow-md mb-6 flex justify-between items-center">
@@ -385,7 +399,6 @@ const Dashboard = () => {
             </div>
 
             {/* BHISI NO */}
-            {/* BHISI NO */}
             <div className="flex items-center justify-between mb-4">
               <label className="font-semibold text-md w-28">Bhisi No:</label>
 
@@ -393,14 +406,15 @@ const Dashboard = () => {
                 <select
                   className="border p-1 w-full rounded pr-10 bg-white"
                   value={bhisiNo}
+                  disabled={!sponsorCode || loadingBhisiList || bhisiList.length === 0}  // 🔥 Disable conditions
                   onChange={(e) => {
                     const selected = e.target.value;
                     setBhisiNo(selected);
 
-                    // 🔹 Directly set amount from bhisiList (no need to type/check)
                     const selectedItem = bhisiList.find(
                       (item) => item.BHISINO === selected
                     );
+
                     if (selectedItem) {
                       setBhisiAmount(selectedItem.AMOUNT);
                     } else {
@@ -408,30 +422,60 @@ const Dashboard = () => {
                     }
                   }}
                 >
-                  <option className="hidden" value="">Select Bhisi No</option>
-
-                  {bhisiList.map((item) => (
-                    <option key={item.BHISINO} value={item.BHISINO}>
-                      {item.BHISINO}
+                  {/* BEFORE VALID USERNAME → DROPDOWN LOCKED */}
+                  {!sponsorCode && (
+                    <option value="" disabled>
+                      Enter username first
                     </option>
-                  ))}
+                  )}
+
+                  {/* LOADING STATE */}
+                  {sponsorCode && loadingBhisiList && (
+                    <option value="" disabled>
+                      Loading Bhisi List...
+                    </option>
+                  )}
+
+                  {/* NO BHISI FOUND */}
+                  {sponsorCode && !loadingBhisiList && bhisiList.length === 0 && (
+                    <option value="" disabled>
+                      No Bhisi Found
+                    </option>
+                  )}
+
+                  {/* SELECT OPTION */}
+                  {sponsorCode && !loadingBhisiList && bhisiList.length > 0 && (
+                    <option className="hidden" value="">
+                      Select Bhisi No
+                    </option>
+                  )}
+
+                  {/* BHISI LIST OPTIONS */}
+                  {sponsorCode &&
+                    !loadingBhisiList &&
+                    bhisiList.length > 0 &&
+                    bhisiList.map((item) => (
+                      <option key={item.BHISINO} value={item.BHISINO}>
+                        {item.BHISINO}
+                      </option>
+                    ))}
                 </select>
 
-                {/* Loader for Bhisi list (optional) */}
+                {/* Loader icon */}
                 {loadingBhisiList && (
                   <div className="absolute inset-y-0 right-2 flex items-center">
                     <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent rounded-full"></div>
                   </div>
                 )}
 
-                {/* ✅ Tick */}
+                {/* Tick */}
                 {!loadingBhisiList && bhisiAmount && sponsorCode && (
                   <div className="absolute inset-y-0 right-2 flex items-center text-green-600 text-xl">
                     ✅
                   </div>
                 )}
 
-                {/* ❌ Cross */}
+                {/* Cross */}
                 {!loadingBhisiList && bhisiNo && !bhisiAmount && sponsorCode && (
                   <div className="absolute inset-y-0 right-2 flex items-center text-red-600 text-xl">
                     ❌
@@ -439,6 +483,7 @@ const Dashboard = () => {
                 )}
               </div>
             </div>
+
 
             {/* AMOUNT */}
             <div className="flex items-center justify-between mb-4">

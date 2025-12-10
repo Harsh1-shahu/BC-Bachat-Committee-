@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import Login from "./UserPanel/Component/Authentication/Login";
 import Dashboard from "./UserPanel/Component/Dashboard/Dashboard";
@@ -14,15 +15,44 @@ import ProtectedRoute from "./ProtectedRoute";
 import RegisterModel from "./UserPanel/Component/Authentication/RegisterModel";
 import WellcomeLetter from "./UserPanel/Component/WellcomeLetter";
 import { useProject } from "./Context/ProjectContext";
+import NoInternet from "./NoInternet";
 
 function App() {
   const { welcomeData } = useProject();
+
+  // ----------------------
+  // INTERNET STATUS HANDLER
+  // ----------------------
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // If offline → show No Internet Page
+  if (!isOnline) {
+    return <NoInternet />;
+  }
+
+  // ----------------------
+  // RENDER APP WHEN ONLINE
+  // ----------------------
   return (
     <div className="bg-gray-200">
       <Notification />
       <WithdrawalModal />
       <RegisterModel />
       <ChangePassword />
+
       <WellcomeLetter
         memberName={welcomeData?.memberName}
         username={welcomeData?.username}

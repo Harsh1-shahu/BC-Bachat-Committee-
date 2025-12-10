@@ -1,0 +1,9 @@
+{
+  "appId": "com.bhisi.app",
+  "appName": "Bhisi",
+  "webDir": "dist",
+  "server": {
+    "url": "https://bhisi.aaroveex.com/Bhisi/",
+    "cleartext": false
+  }
+}

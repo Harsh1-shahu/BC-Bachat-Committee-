@@ -70,10 +70,9 @@ const RunningBC = () => {
           <table className="min-w-full bg-white rounded-xl shadow-md overflow-hidden">
             <thead className="bg-gray-400 text-gray-700">
               <tr className="whitespace-nowrap text-xs md:text-sm font-semibold">
-                <th className="p-2 md:p-3 text-left">Sr. No</th>
-                <th className="p-2 md:p-3 text-left">Bhisi No</th>
-                <th className="p-2 md:p-3 text-left">Expiry Date</th>
-                <th className="p-2 md:p-3 text-left">Amount</th>
+                <th className="p-2 md:p-3 text-center">Sr. No</th>
+                <th className="p-2 md:p-3 text-center">Bhisi No</th>
+                <th className="p-2 md:p-3 text-center">Amount</th>
                 {/* <th className="p-2 md:p-3 text-center">Name</th> */}
               </tr>
             </thead>
@@ -92,12 +91,11 @@ const RunningBC = () => {
                   </td>
                 </tr>
               ) : currentItems.length ? (
-                currentItems.map((item) => (
+                currentItems.map((item, index) => (
                   <tr key={item.id} className="border-b hover:bg-gray-50">
-                    <td className="p-2 text-center">{item.srNo}</td>
-                    <td className="p-2 font-medium">{item.id}</td>
-                    <td className="p-2 font-semibold text-gray-700">{item.expiry}</td>
-                    <td className="p-2 font-semibold text-blue-600">{item.amount}</td>
+                    <td className="p-2 text-center">{indexOfFirst + index + 1}</td>
+                    <td className="p-2 font-medium text-center">{item.id}</td>
+                    <td className="p-2 font-semibold text-blue-600 text-center">{item.amount}</td>
                     {/* <td className="p-2 font-semibold text-gray-700">{item.name}</td> */}
                   </tr>
                 ))
@@ -136,7 +134,7 @@ const RunningBC = () => {
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`px-3 py-1 rounded-md border ${currentPage === i + 1
-                  ? "bg-gray-700 text-white"
+                  ? "bg-blue-800 text-white"
                   : "bg-white text-black"
                   }`}
               >

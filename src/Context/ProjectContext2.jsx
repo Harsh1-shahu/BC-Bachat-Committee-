@@ -16,6 +16,56 @@ export const ProjectProvider = ({ children }) => {
     // Bhisi amount multiplier state
     const [bhisiMultiplier, setBhisiMultiplier] = useState(15); // Default multiplier is 15
 
+    // confirm check state status
+    const [confirmData, setConfirmData] = useState(null);
+
+    const confirmAction = (message) => {
+        return new Promise((resolve) => {
+            setConfirmData({
+                message,
+                resolve
+            });
+        });
+    };
+
+    // ---------------------------------------------
+    // CONFIRMATION POPUP UI
+    // ---------------------------------------------
+    const ConfirmationPopup = () => {
+        if (!confirmData) return null;
+
+        return (
+            <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+                <div className="bg-white p-5 rounded-lg w-80 shadow-lg text-center">
+                    <h3 className="text-lg font-semibold mb-3">Are you sure?</h3>
+                    <p className="text-gray-700 mb-5">{confirmData.message}</p>
+
+                    <div className="flex justify-between">
+                        <button
+                            onClick={() => {
+                                confirmData.resolve(false);
+                                setConfirmData(null);
+                            }}
+                            className="bg-gray-300 px-4 py-2 rounded"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                confirmData.resolve(true);
+                                setConfirmData(null);
+                            }}
+                            className="bg-green-600 text-white px-4 py-2 rounded"
+                        >
+                            Yes, Continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
 
     // ----------------------------------------------------
     //   RENEW BHISI API
@@ -83,7 +133,7 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
-    
+
     // ----------------------------------------------------
     //   BID FOR BHISI API
     // ----------------------------------------------------
@@ -145,12 +195,34 @@ export const ProjectProvider = ({ children }) => {
         }
     };
 
+    // ----------------------------------------------------
+    //   GET Bid Amount API
+    // ----------------------------------------------------
+    const getBidAmount = async (bhisino) => {
+        try {
+            const formData = new FormData();
+            formData.append("bhisino", bhisino);
+            formData.append("apiKey", apiKey);
+
+            const response = await fetch(`${apiUrl}/Statistic/bidAmount`, {
+                method: "POST",
+                body: formData,
+            });
+
+            return await response.json();
+        } catch (error) {
+            return { ResponseStatus: "error", ResponseMessage: error.message };
+        }
+    };
+
     return (
         <ProjectContext2.Provider value={{
             renewBhisi, walletTransfer, bidForBhisi, getReports, reportsPerPage, bhisiMultiplier,
-            setBhisiMultiplier
+            setBhisiMultiplier, getBidAmount, confirmAction
         }}>
             {children}
+            {/* 🔥 RENDER CONFIRM POPUP HERE (IMPORTANT) */}
+            <ConfirmationPopup />
         </ProjectContext2.Provider>
     );
 };

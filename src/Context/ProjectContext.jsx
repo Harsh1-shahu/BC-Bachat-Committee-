@@ -83,7 +83,6 @@ export const ProjectProvider = ({ children }) => {
 
       console.log("User formdata data", formData);
 
-
       // API Call
       const response = await fetch(`${apiUrl}/Statistic/CheckLogin`, {
         method: "POST",
@@ -297,7 +296,7 @@ export const ProjectProvider = ({ children }) => {
     try {
       const formData = new FormData();
       formData.append("mcode", membCode);
-      formData.append("bhisiNo", bhisino);
+      formData.append("bhisino", bhisino);
       formData.append("username_purbhisi", username_purbhisi); // <-- FIXED
       formData.append("apiKey", apiKey);
 

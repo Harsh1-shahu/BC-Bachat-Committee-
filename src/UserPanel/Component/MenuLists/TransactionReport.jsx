@@ -144,7 +144,6 @@ const TransactionReport = () => {
               className={`bg-white p-2 mb-3 rounded-xl shadow-md border-l-4 border-r-4 
                       ${tx.debit > 0 ? "border-red-500" : tx.credit > 0 ? "border-green-500" : "border-gray-500"} 
                        flex items-center justify-between cursor-pointer hover:shadow-lg transition`}
-
             >
               {/* LEFT — INDEX + DATE + REMARK */}
               <div className="flex items-start gap-3 col-span-2">

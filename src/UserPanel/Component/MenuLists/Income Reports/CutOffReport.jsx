@@ -45,7 +45,7 @@ const CutOffReport = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen">
       <Navbar />
 
       <h1 className="text-center pt-20 text-xl font-bold">Cut-off Income Report</h1>
